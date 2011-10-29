@@ -15,6 +15,9 @@ extern struct proc_dir_entry *acpi_root_dir;
 
 static char result_buffer[BUFFER_SIZE];
 
+// stores the method and arguments passed by the user
+static char input[2 * BUFFER_SIZE];
+
 static u8 temporary_buffer[BUFFER_SIZE];
 
 static size_t get_avail_bytes(void) {
@@ -243,12 +246,11 @@ static char *parse_acpi_args(char *input, int *nargs, union acpi_object **args)
 static int acpi_proc_write( struct file *filp, const char __user *buff,
     unsigned long len, void *data )
 {
-    char input[2 * BUFFER_SIZE] = { '\0' };
     union acpi_object *args;
     int nargs, i;
     char *method;
 
-    if (len > sizeof(input) - 1) {
+    if (len >= sizeof(input)) {
         printk(KERN_ERR "acpi_call: Input too long! (%lu)\n", len);
         return -ENOSPC;
     }
