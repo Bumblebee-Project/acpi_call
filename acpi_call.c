@@ -90,9 +90,14 @@ static void do_acpi_call(const char * method, int argc, union acpi_object *argv)
     struct acpi_object_list arg;
     struct acpi_buffer buffer = { ACPI_ALLOCATE_BUFFER, NULL };
 
-    *result_buffer = '\0';
-    acpi_result_to_string(argv);
-    printk(KERN_INFO "acpi_call: Calling %s %s\n", method, result_buffer);
+    // argv can be NULL if 'fn' instead of 'fn ' or 'fn arg' is called
+    if (argv) {
+        *result_buffer = '\0';
+        acpi_result_to_string(argv);
+        printk(KERN_INFO "acpi_call: Calling %s %s\n", method, result_buffer);
+    } else {
+        printk(KERN_INFO "acpi_call: Calling %s\n", method);
+    }
 
     // get the handle of the method, must be a fully qualified path
     status = acpi_get_handle(NULL, (acpi_string) method, &handle);
