@@ -1,8 +1,9 @@
-obj-m := acpi_call.o
+modname := acpi_call
+obj-m := $(modname).o
 
 KVERSION := $(shell uname -r)
 KDIR := /lib/modules/$(KVERSION)/build
-PWD := $(shell pwd)
+PWD := "$$(pwd)"
 
 default:
 	$(MAKE) -C $(KDIR) M=$(PWD) modules
@@ -11,5 +12,5 @@ clean:
 	$(MAKE) -C $(KDIR) M=$(PWD) clean
 
 load:
-	-/sbin/rmmod acpi_call
-	/sbin/insmod acpi_call.ko
+	-/sbin/rmmod $(modname)
+	/sbin/insmod $(modname).ko
