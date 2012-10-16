@@ -1,5 +1,7 @@
 /* Copyright (c) 2010: Michal Kottman */
 
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/proc_fs.h>
@@ -94,9 +96,9 @@ static void do_acpi_call(const char * method, int argc, union acpi_object *argv)
     if (argv) {
         *result_buffer = '\0';
         acpi_result_to_string(argv);
-        printk(KERN_INFO "acpi_call: Calling %s %s\n", method, result_buffer);
+        pr_debug("Calling %s %s\n", method, result_buffer);
     } else {
-        printk(KERN_INFO "acpi_call: Calling %s\n", method);
+        pr_debug("Calling %s\n", method);
     }
 
     // get the handle of the method, must be a fully qualified path
@@ -105,7 +107,7 @@ static void do_acpi_call(const char * method, int argc, union acpi_object *argv)
     if (ACPI_FAILURE(status))
     {
         snprintf(result_buffer, BUFFER_SIZE, "Error: %s", acpi_format_exception(status));
-        printk(KERN_ERR "acpi_call: Cannot get handle: %s\n", result_buffer);
+        pr_debug("Cannot get handle: %s\n", result_buffer);
         return;
     }
 
@@ -118,7 +120,7 @@ static void do_acpi_call(const char * method, int argc, union acpi_object *argv)
     if (ACPI_FAILURE(status))
     {
         snprintf(result_buffer, BUFFER_SIZE, "Error: %s", acpi_format_exception(status));
-        printk(KERN_ERR "acpi_call: Method call failed: %s\n", result_buffer);
+        pr_debug("Method call failed: %s\n", result_buffer);
         return;
     }
 
@@ -127,7 +129,7 @@ static void do_acpi_call(const char * method, int argc, union acpi_object *argv)
     acpi_result_to_string(buffer.pointer);
     kfree(buffer.pointer);
 
-    printk(KERN_INFO "acpi_call: Call successful: %s\n", result_buffer);
+    pr_debug("Call successful: %s\n", result_buffer);
 }
 
 /** Decodes 2 hex characters to an u8 int
@@ -186,7 +188,7 @@ static char *parse_acpi_args(char *input, int *nargs, union acpi_object **args)
                 
                 len = p - s;
                 if (len % 2 == 1) {
-                    printk(KERN_ERR "acpi_call: buffer arg%d is not multiple of 8 bits\n", *nargs);
+                    pr_err("buffer arg%d is not multiple of 8 bits\n", *nargs);
                     return NULL;
                 }
                 len /= 2;
@@ -208,7 +210,7 @@ static char *parse_acpi_args(char *input, int *nargs, union acpi_object **args)
                 arg->buffer.length = 0;
                 while (*s && *s++ != '}') {
                     if (buf >= temporary_buffer + sizeof(temporary_buffer)) {
-                        printk(KERN_ERR "acpi_call: buffer arg%d is truncated because the buffer is full\n", *nargs);
+                        pr_err("buffer arg%d is truncated because the buffer is full\n", *nargs);
                         // clear remaining arguments
                         while (*s && *s != '}')
                             ++s;
@@ -258,7 +260,7 @@ static int acpi_proc_write( struct file *filp, const char __user *buff,
     char *method;
 
     if (len >= sizeof(input)) {
-        printk(KERN_ERR "acpi_call: Input too long! (%lu)\n", len);
+        pr_warn("Input too long! (%lu)\n", len);
         return -ENOSPC;
     }
 
@@ -314,13 +316,13 @@ static int __init init_acpi_call(void)
     strcpy(result_buffer, "not called");
 
     if (acpi_entry == NULL) {
-      printk(KERN_ERR "acpi_call: Couldn't create proc entry\n");
+      pr_err("Couldn't create proc entry\n");
       return -ENOMEM;
     }
 
     acpi_entry->write_proc = acpi_proc_write;
     acpi_entry->read_proc = acpi_proc_read;
-    printk(KERN_INFO "acpi_call: Module loaded successfully\n");
+    pr_info("Module loaded successfully\n");
 
     return 0;
 }
@@ -328,7 +330,7 @@ static int __init init_acpi_call(void)
 static void __exit unload_acpi_call(void)
 {
     remove_proc_entry("call", acpi_root_dir);
-    printk(KERN_INFO "acpi_call: Module unloaded successfully\n");
+    pr_info("Module unloaded successfully\n");
 }
 
 module_init(init_acpi_call);
