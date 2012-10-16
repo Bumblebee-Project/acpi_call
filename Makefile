@@ -13,8 +13,8 @@ default:
 	$(MAKE) -C $(KDIR) M=$(PWD) modules
 
 clean:
-	$(MAKE) -C $(KDIR) M=$(PWD) clean
+	$(MAKE) O=$(PWD) -C $(KDIR) M=$(PWD) clean
 
 load:
-	-/sbin/rmmod $(modname)
-	/sbin/insmod $(modname).ko
+	-rmmod $(modname)
+	insmod $(modname).ko
